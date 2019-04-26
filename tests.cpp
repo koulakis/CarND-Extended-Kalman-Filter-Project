@@ -4,8 +4,10 @@
 
 #include <gtest/gtest.h>
 #include "src/tools.h"
+#include <iomanip>
 
 using Eigen::VectorXd;
+using Eigen::MatrixXd;
 using std::vector;
 
 TEST(RMSE, ComputesCorrectly)
@@ -28,6 +30,21 @@ TEST(RMSE, ComputesCorrectly)
     expected_rmse << 29.706901555025897, 27.65863337187866, 41.23105625617661, 19.81161275615895;
 
     ASSERT_EQ(calculated_rmse, expected_rmse);
+}
+
+TEST(Jacobian, ComputedCorrectly)
+{
+    VectorXd measurement(4);
+    measurement << 3, 2, 5, 1;
+    MatrixXd expected_jacobian(3, 4);
+    expected_jacobian <<
+        0.83205032348632812, 0.55470019578933716, 0, 0,
+        -0.1538461566312285, 0.23076923494684273, 0, 0,
+        0.29868472915498179, -0.44802709373247268, 0.83205032348632812, 0.55470019578933716;
+
+    auto jacobian = Tools::CalculateJacobian(measurement);
+
+    ASSERT_EQ(jacobian, expected_jacobian);
 }
 
 int main(int argc, char **argv)
