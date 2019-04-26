@@ -7,7 +7,8 @@ add_definitions(-std=c++11)
 set(CXX_FLAGS "-Wall")
 set(CMAKE_CXX_FLAGS "${CXX_FLAGS}")
 
-set(sources src/main.cpp src/tools.cpp src/FusionEKF.cpp src/kalman_filter.cpp src/tools.h src/FusionEKF.h src/kalman_filter.h)
+set(sources src/tools.cpp src/FusionEKF.cpp src/kalman_filter.cpp src/tools.h src/FusionEKF.h src/kalman_filter.h)
+set(main src/main.cpp)
 
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin") 
@@ -20,7 +21,17 @@ link_directories(/usr/local/Cellar/libuv/1*/lib)
 
 endif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin") 
 
+# Locate GTest
+find_package(GTest REQUIRED)
+include_directories(${GTEST_INCLUDE_DIRS})
 
-add_executable(ExtendedKF ${sources})
+# Link runTests with what we want to test and the GTest and pthread library
+# This is a bit hacky since the excecutable which runs the test is being built every time the CMakeLists file is run
+# Those two parts should be decoupled so that the code is independent of the tests
+add_executable(ExecuteTests tests.cpp ${sources})
+target_link_libraries(ExecuteTests ${GTEST_LIBRARIES} pthread)
+
+
+add_executable(ExtendedKF ${sources} ${main})
 
 target_link_libraries(ExtendedKF z ssl uv uWS)

@@ -23,3 +23,11 @@ xcuserdata/
 ide_profiles/xcode/Debug/
 ide_profiles/xcode/ExtendedKF.build/
 debug
+.idea
+CMakeCache.txt
+CMakeFiles
+ExecuteTests
+ExtendedKF
+Makefile
+cmake-build-debug
+cmake_install.cmake

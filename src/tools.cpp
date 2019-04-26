@@ -4,6 +4,7 @@
 
 using Eigen::VectorXd;
 using Eigen::MatrixXd;
+using Eigen::ArrayXd;
 using std::vector;
 
 Tools::Tools() {}
@@ -11,10 +12,15 @@ Tools::Tools() {}
 Tools::~Tools() {}
 
 VectorXd Tools::CalculateRMSE(const vector<VectorXd> &estimations, const vector<VectorXd> &ground_truth) {
-  // auto x =  boost::combine(estimations, ground_truth);
-  VectorXd y(4);
-  y << 2,3,4,5;
-  return y;
+  ArrayXd mse(4);
+  mse << 0, 0, 0, 0;
+  int number_of_samples = estimations.size();
+
+  for(int i = 0; i < number_of_samples; i++) {
+    mse += (estimations[i] - ground_truth[i]).array().square();
+  }
+  
+  return (mse / number_of_samples).sqrt();
 }
 
 MatrixXd Tools::CalculateJacobian(const VectorXd& x_state) {
