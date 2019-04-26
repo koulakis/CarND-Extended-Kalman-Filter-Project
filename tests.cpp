@@ -22,8 +22,7 @@ TEST(RMSE, ComputesCorrectly)
     meas_gt2 << 33,43,4,32;
     vector<VectorXd> measurements_ground_truth = {meas_gt1, meas_gt2};
 
-    Tools tools;
-    VectorXd calculated_rmse = tools.CalculateRMSE(measurements_pred, measurements_ground_truth);
+    VectorXd calculated_rmse = Tools::CalculateRMSE(measurements_pred, measurements_ground_truth);
 
     VectorXd expected_rmse(4);
     expected_rmse << 29.706901555025897, 27.65863337187866, 41.23105625617661, 19.81161275615895;
