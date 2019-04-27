@@ -1,35 +1,34 @@
 #include "tools.h"
 #include <iostream>
-#include <boost/range/combine.hpp>
+#include <tuple>
 
 using Eigen::VectorXd;
 using Eigen::MatrixXd;
 using Eigen::ArrayXd;
 using std::vector;
+using namespace ranges;
 
 Tools::Tools() {}
 
 Tools::~Tools() {}
 
 VectorXd Tools::CalculateRMSE(const vector<VectorXd> &estimations, const vector<VectorXd> &ground_truth) {
-  ArrayXd mse(4);
-  mse << 0, 0, 0, 0;
-  int number_of_samples = estimations.size();
+  ArrayXd zero_vector = ArrayXd::Zero(4);
 
-  for(int i = 0; i < number_of_samples; i++) {
-    mse += (estimations[i] - ground_truth[i]).array().square();
-  }
+  auto sum_of_square_diffs = 
+    accumulate(
+      view::zip(estimations, ground_truth)
+      | view::transform([](auto tuple) { return (tuple.first - tuple.second).array().square(); }),
+      zero_vector);
   
-  return (mse / number_of_samples).sqrt();
+  return (sum_of_square_diffs / estimations.size()).sqrt();
 }
 
 MatrixXd Tools::CalculateJacobian(const VectorXd& x_state) {
     MatrixXd Hj(3,4);
 
-    float px = x_state(0);
-    float py = x_state(1);
-    float vx = x_state(2);
-    float vy = x_state(3);
+    float px = x_state(0), py = x_state(1);
+    float vx = x_state(2), vy = x_state(3);
 
     if(px == 0 && py == 0) {
         throw std::invalid_argument("Both px and py are equal to 0!");
