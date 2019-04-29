@@ -3,8 +3,10 @@
 //
 
 #include <gtest/gtest.h>
-#include "src/tools.h"
 #include <iomanip>
+
+#include "src/tools.h"
+#include "src/kalman_filter.h"
 
 using Eigen::VectorXd;
 using Eigen::MatrixXd;
@@ -45,6 +47,43 @@ TEST(Jacobian, ComputedCorrectly)
     auto jacobian = Tools::CalculateJacobian(measurement);
 
     ASSERT_EQ(jacobian, expected_jacobian);
+}
+
+TEST(KalmanFilterPredict, Predicts)
+{
+    MatrixXd F(2, 2);
+    F <<
+        1, 1,
+        0, 1;
+
+    MatrixXd Q(2, 2);
+    Q <<
+        2.1, 1.1,
+        0.3, 1.4;
+
+    VectorXd x_old(2);
+    x_old << 1, 2;
+
+    MatrixXd P_old(2, 2);
+    P_old <<
+        0.3, 1.4,
+        4., 2;
+
+    VectorXd expected_x(2);
+    expected_x << 3, 2;
+
+    MatrixXd expected_P(2, 2);
+    expected_P <<
+        9.7999999999999989, 4.5,
+        6.2999999999999998,  3.3999999999999999;
+
+
+    auto pair = Kalman::Predict(F, Q)(x_old, P_old);
+    auto x = std::get<0>(pair);
+    auto P = std::get<1>(pair);
+
+    ASSERT_EQ(x, expected_x);
+    ASSERT_EQ(P, expected_P);
 }
 
 int main(int argc, char **argv)

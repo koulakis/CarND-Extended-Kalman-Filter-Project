@@ -3,6 +3,14 @@
 
 #include "Eigen/Dense"
 
+using Eigen::MatrixXd;
+using Eigen::VectorXd;
+
+namespace Kalman
+{
+    std::function<std::tuple<VectorXd, MatrixXd>(VectorXd, MatrixXd)> Predict(const MatrixXd &F, const MatrixXd &Q);
+}
+
 class KalmanFilter {
  public:
   /**

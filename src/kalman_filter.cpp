@@ -1,4 +1,5 @@
 #include "kalman_filter.h"
+#include <tuple>
 
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
@@ -7,6 +8,14 @@ using Eigen::VectorXd;
  * Please note that the Eigen library does not initialize 
  *   VectorXd or MatrixXd objects with zeros upon creation.
  */
+
+namespace Kalman {
+    std::function<std::tuple<VectorXd, MatrixXd>(VectorXd, MatrixXd)> Predict(const MatrixXd &F, const MatrixXd &Q) {
+        return [&F, &Q](VectorXd x, MatrixXd P) -> std::tuple<VectorXd, MatrixXd> {
+            return std::make_tuple(F * x, F * P * F.transpose() + Q);
+        };
+    }
+}
 
 KalmanFilter::KalmanFilter() {}
 
@@ -22,10 +31,10 @@ void KalmanFilter::Init(VectorXd &x_in, MatrixXd &P_in, MatrixXd &F_in,
   Q_ = Q_in;
 }
 
+
 void KalmanFilter::Predict() {
-  /**
-   * TODO: predict the state
-   */
+    auto pair = Kalman::Predict(F_, Q_)(x_, P_);
+    x_ = std::get<0>(pair), P_ = std::get<1>(pair);
 }
 
 void KalmanFilter::Update(const VectorXd &z) {
