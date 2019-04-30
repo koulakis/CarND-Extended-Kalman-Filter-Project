@@ -117,9 +117,79 @@ TEST(KalmanFilterUpdate, Updates)
     VectorXd measurement(1);
     measurement << 2;
 
-    auto pair = Kalman::Update(H, R)(x, P, measurement);
+    auto transform_x = [H](VectorXd x_) {return H * x_;};
+
+    auto pair = Kalman::Update(H, R, transform_x)(x, P, measurement);
     x = std::get<0>(pair);
     P = std::get<1>(pair);
+
+    ASSERT_EQ(x, expected_x);
+    ASSERT_EQ(P, expected_P);
+}
+
+TEST(CartesianToPolar, TransformsCorrectly)
+{
+    VectorXd cartesian(4);
+    cartesian << 2, 3, 4, -1.2;
+    VectorXd expected_polar(3);
+    expected_polar << 3.605551275463989, 0.982793723247329, 1.2203404316955042;
+
+    VectorXd polar = Tools::Cartesian_to_polar(cartesian);
+
+    ASSERT_EQ(polar, expected_polar);
+}
+
+TEST(ExtendedKalmanFilterUpdate, Updates)
+{
+    MatrixXd H(3, 4);
+    H << 
+        1, 0, 3, 4, 
+        5, 4, 3, 2, 
+        1, 2, 1, 1;
+    
+    MatrixXd R(3, 3);
+    R << 
+        2, 3, 4,
+        2, 1, 1,
+        2, 5, 3;
+
+    VectorXd x_old(4);
+    x_old << 1, 2.3, 3, 2;
+
+    MatrixXd P_old(4, 4);
+    P_old << 
+        1000, 0, 0, 0,
+        0, 1000, 0, 0, 
+        0, 0, 1000, 0,
+        0, 0, 0, 1000;
+
+    VectorXd expected_x(4);
+    expected_x <<
+        -3.4141459299823111, 
+        3.5975216550152656, 
+        4.1693301548843573, 
+        4.6894593212739286;
+
+    MatrixXd expected_P(4, 4);
+    expected_P <<
+        0.95200020906638372, -4.5197403090809809, -1.0979698608941266, -2.5253306472298953,
+        -6.8827480367767802, 7.0401678105003196,  4.6557641904209408,  10.708257498772277,
+        -5.3004940672112255, 4.7847721133135597,  843.88291460750565,  -359.06929173522065,
+        -12.191136196114005, 11.004975717568311,  -359.06929173522059, 174.14063974428052;
+
+    VectorXd x(4);
+    x = x_old;
+    MatrixXd P(4, 3);
+    P = P_old;
+
+    VectorXd measurement(3);
+    measurement << 2, 3, 2.5;
+
+    auto transform_x = [H](VectorXd x_) {return H * x_;};
+    MatrixXd H_Jacobian = Tools::CalculateJacobian(x_old);
+
+    auto pair = Kalman::Update(H_Jacobian, R, Tools::Cartesian_to_polar)(x_old, P_old, measurement);
+    x = std::get<0>(pair), P = std::get<1>(pair);
 
     ASSERT_EQ(x, expected_x);
     ASSERT_EQ(P, expected_P);

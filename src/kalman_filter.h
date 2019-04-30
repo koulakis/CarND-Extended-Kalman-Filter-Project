@@ -9,7 +9,10 @@ using Eigen::VectorXd;
 namespace Kalman
 {
     std::function<std::tuple<VectorXd, MatrixXd>(VectorXd, MatrixXd)> Predict(const MatrixXd &F, const MatrixXd &Q);
-    std::function<std::tuple<VectorXd, MatrixXd>(VectorXd, MatrixXd, VectorXd)> Update(const MatrixXd &H, const MatrixXd &R);
+    std::function<std::tuple<VectorXd, MatrixXd>(VectorXd, MatrixXd, VectorXd)> Update(
+      const MatrixXd &H, 
+      const MatrixXd &R,
+      const std::function<VectorXd(VectorXd)> &transform_x);
 }
 
 class KalmanFilter {

@@ -32,10 +32,24 @@ namespace Tools {
 
         float dist = sqrt(pow(px, 2) + pow(py, 2));
         Hj <<
-           px / dist, py / dist, 0, 0,
-                -py / pow(dist, 2), px / pow(dist, 2), 0, 0,
-                py * (vx * py - vy * px) / pow(dist, 3), px * (vy * px - vx * py) / pow(dist, 3), px / dist, py / dist;
+            px / dist, py / dist, 0, 0,
+            -py / pow(dist, 2), px / pow(dist, 2), 0, 0,
+            py * (vx * py - vy * px) / pow(dist, 3), px * (vy * px - vx * py) / pow(dist, 3), px / dist, py / dist;
 
         return Hj;
+    }
+
+    VectorXd Cartesian_to_polar(VectorXd x)
+    {
+        double px = x(0), py = x(1), ux = x(2), uy = x(3); 
+
+        double measure_x = sqrt(pow(px, 2) + pow(py, 2));
+        VectorXd out_x(3);
+        out_x << 
+            measure_x,
+            atan(py / px),
+            (px * ux + py * uy) / measure_x;
+
+        return out_x;
     }
 }
