@@ -4,6 +4,7 @@
 
 #include <gtest/gtest.h>
 #include <iomanip>
+#include <iostream>
 
 #include "src/tools.h"
 #include "src/kalman_filter.h"
@@ -81,6 +82,44 @@ TEST(KalmanFilterPredict, Predicts)
     auto pair = Kalman::Predict(F, Q)(x_old, P_old);
     auto x = std::get<0>(pair);
     auto P = std::get<1>(pair);
+
+    ASSERT_EQ(x, expected_x);
+    ASSERT_EQ(P, expected_P);
+}
+
+TEST(KalmanFilterUpdate, Updates)
+{
+    MatrixXd H(1, 2);
+    H << 1, 0;
+    
+    MatrixXd R(1, 1);
+    R << 1;
+
+    VectorXd x_old(2);
+    x_old << 0, 0;
+
+    MatrixXd P_old(2, 2);
+    P_old << 1000, 0, 0, 1000;
+
+    VectorXd expected_x(2);
+    expected_x << 1.9980019980019981, 0;
+
+    MatrixXd expected_P(2, 2);
+    expected_P <<
+        0.99900099900096517, 0,
+        0, 1000;
+
+    VectorXd x(2);
+    x = x_old;
+    MatrixXd P(2, 2);
+    P = P_old;
+
+    VectorXd measurement(1);
+    measurement << 2;
+
+    auto pair = Kalman::Update(H, R)(x, P, measurement);
+    x = std::get<0>(pair);
+    P = std::get<1>(pair);
 
     ASSERT_EQ(x, expected_x);
     ASSERT_EQ(P, expected_P);
