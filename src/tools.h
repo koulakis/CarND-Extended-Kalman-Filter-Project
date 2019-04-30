@@ -21,6 +21,7 @@ namespace Tools {
     */
     MatrixXd CalculateJacobian(const VectorXd &x_state);
     VectorXd Cartesian_to_polar(VectorXd x);
+    VectorXd PolarToCartesianLocation(VectorXd polar);
 }
 
 #endif  // TOOLS_H_

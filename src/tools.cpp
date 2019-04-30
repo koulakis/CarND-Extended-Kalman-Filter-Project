@@ -1,5 +1,6 @@
 #include "tools.h"
 #include <iostream>
+#include <math.h>
 
 using Eigen::VectorXd;
 using Eigen::MatrixXd;
@@ -51,5 +52,15 @@ namespace Tools {
             (px * ux + py * uy) / measure_x;
 
         return out_x;
+    }
+
+    VectorXd PolarToCartesianLocation(VectorXd polar)
+    {
+        double rho = polar(0), theta = polar(1); 
+
+        VectorXd cartesian(2);
+        cartesian << rho * cos(theta), rho * sin(theta);
+
+        return cartesian;
     }
 }
