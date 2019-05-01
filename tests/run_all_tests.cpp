@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include "test_tools.cpp"
 #include "test_kalman_filter.cpp"
+#include "test_fusion_ekf.cpp"
 
 int main(int argc, char **argv)
 {

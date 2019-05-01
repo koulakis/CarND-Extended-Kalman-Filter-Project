@@ -5,8 +5,6 @@
 
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
-using std::cout;
-using std::endl;
 using std::vector;
 
 /**
@@ -59,9 +57,6 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
    * Initialization
    */
   if (!is_initialized_) {
-    // first measurement
-    cout << "EKF: " << endl;
-    
     // initialize x
     if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR) {
       VectorXd x_location = Tools::PolarToCartesianLocation(measurement_pack.raw_measurements_);
@@ -117,8 +112,4 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
     : KalmanFilter::Update(H_laser_, R_laser_)(x_, P_, measurement_pack.raw_measurements_);
 
   x_ = std::get<0>(update), P_ = std::get<1>(update);
-
-  // print the output
-  cout << "x_ = " << x_ << endl;
-  cout << "P_ = " << P_ << endl;
 }

@@ -1,6 +1,4 @@
 #include <gtest/gtest.h>
-#include <iomanip>
-#include <iostream>
 
 #include "../src/tools.h"
 #include "../src/kalman_filter.h"

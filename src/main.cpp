@@ -115,6 +115,8 @@ int main() {
           VectorXd estimate(4);
 
           VectorXd x = fusionEKF.EstimatedLocation();
+          // // print the output
+          std::cout << "x = " << x << std::endl;
           double p_x = x(0);
           double p_y = x(1);
           double v1  = x(2);
