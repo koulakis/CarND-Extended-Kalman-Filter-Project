@@ -41,12 +41,19 @@ FusionEKF::FusionEKF() {
   H_laser_ <<
     1, 0, 0, 0,
     0, 1, 0, 0;
+
+  x_ = VectorXd(4);
+  F_ = MatrixXd(4, 4);
+  P_ = MatrixXd(4, 4);
+  Q_ = MatrixXd(4, 4);
 }
 
 /**
  * Destructor.
  */
 FusionEKF::~FusionEKF() {}
+
+VectorXd FusionEKF::getX(){ return x_; };
 
 void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
   /**
@@ -55,31 +62,28 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
   if (!is_initialized_) {
     // first measurement
     cout << "EKF: " << endl;
-    ekf_.x_ = VectorXd(4);
-    ekf_.x_ << 1, 1, 1, 1;
+    
+    x_ << 1, 1, 1, 1;
 
-    ekf_.F_ = MatrixXd(4, 4);
-    ekf_.F_ << 
+    F_ << 
       1, 0, 1, 0,
       0, 1, 0, 1,
       0, 0, 1, 0,
       0, 0, 0, 1;
 
-    ekf_.P_ = MatrixXd(4, 4);
-    ekf_.P_ << 
+    
+    P_ << 
       1, 0, 0, 0,
       0, 1, 0, 0,
       0, 0, 1000, 0,
       0, 0, 0, 1000;
 
-    ekf_.H_ = H_laser_;
-
     if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR) {
       VectorXd x_location = Tools::PolarToCartesianLocation(measurement_pack.raw_measurements_);
-      ekf_.x_ << x_location(0), x_location(1), 0, 0;
+      x_ << x_location(0), x_location(1), 0, 0;
     }
     else if (measurement_pack.sensor_type_ == MeasurementPackage::LASER) {
-      ekf_.x_ << measurement_pack.raw_measurements_[0], measurement_pack.raw_measurements_[1], 0, 0;
+      x_ << measurement_pack.raw_measurements_[0], measurement_pack.raw_measurements_[1], 0, 0;
     }
 
     previous_timestamp_ = measurement_pack.timestamp_;
@@ -95,7 +99,7 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
   double dt = (measurement_pack.timestamp_ - previous_timestamp_) / 1000000.0;
   previous_timestamp_ = measurement_pack.timestamp_;
 
-  ekf_.F_ <<
+  F_ <<
     1, 0, dt, 0,
     0, 1, 0, dt,
     0, 0, 1, 0,
@@ -103,27 +107,26 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
 
   double noise_ax = 9, noise_ay = 9;
 
-  ekf_.Q_ = MatrixXd(4, 4);
-  ekf_.Q_ << 
+  Q_ << 
     pow(dt, 4) / 4 * noise_ax, 0, pow(dt, 3) / 2 * noise_ax, 0,
     0, pow(dt, 4) / 4 * noise_ay, 0, pow(dt, 3) / 2 * noise_ay,
     pow(dt, 3) / 2 * noise_ax, 0, pow(dt, 2) * noise_ax, 0,
     0, pow(dt, 3) / 2 * noise_ay, 0, pow(dt, 2) * noise_ay;
 
-  ekf_.Predict();
+  auto prediction = KalmanFilter::Predict(F_, Q_)(x_, P_);
+  x_ = std::get<0>(prediction), P_ = std::get<1>(prediction);
 
   /**
    * Update
    */
-  if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR) {
-    ekf_.R_ = R_radar_;
-    ekf_.UpdateEKF(measurement_pack.raw_measurements_);
-  } else {
-    ekf_.R_ = R_laser_;
-    ekf_.Update(measurement_pack.raw_measurements_);
-  }
+  auto update = 
+    measurement_pack.sensor_type_ == MeasurementPackage::RADAR 
+    ? KalmanFilter::UpdateEKF(R_radar_)(x_, P_, measurement_pack.raw_measurements_)
+    : KalmanFilter::Update(H_laser_, R_laser_)(x_, P_, measurement_pack.raw_measurements_);
+
+  x_ = std::get<0>(update), P_ = std::get<1>(update);
 
   // print the output
-  cout << "x_ = " << ekf_.x_ << endl;
-  cout << "P_ = " << ekf_.P_ << endl;
+  cout << "x_ = " << x_ << endl;
+  cout << "P_ = " << P_ << endl;
 }

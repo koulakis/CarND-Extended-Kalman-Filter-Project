@@ -26,10 +26,7 @@ class FusionEKF {
    */
   void ProcessMeasurement(const MeasurementPackage &measurement_pack);
 
-  /**
-   * Kalman Filter update and prediction math lives in here.
-   */
-  KalmanFilter ekf_;
+  VectorXd getX();
 
  private:
   // check whether the tracking toolbox was initialized or not (first measurement)
@@ -43,6 +40,10 @@ class FusionEKF {
   Eigen::MatrixXd R_radar_;
   Eigen::MatrixXd H_laser_;
   Eigen::MatrixXd Hj_;
+  Eigen::MatrixXd F_;
+  Eigen::MatrixXd Q_;
+  Eigen::VectorXd x_;
+  Eigen::MatrixXd P_;
 };
 
 #endif // FusionEKF_H_

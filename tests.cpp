@@ -79,7 +79,7 @@ TEST(KalmanFilterPredict, Predicts)
         6.2999999999999998,  3.3999999999999999;
 
 
-    auto pair = Kalman::Predict(F, Q)(x_old, P_old);
+    auto pair = KalmanFilter::Predict(F, Q)(x_old, P_old);
     auto x = std::get<0>(pair);
     auto P = std::get<1>(pair);
 
@@ -117,7 +117,7 @@ TEST(KalmanFilterUpdate, Updates)
     VectorXd measurement(1);
     measurement << 2;
 
-    auto pair = Kalman::Update(H, R)(x, P, measurement);
+    auto pair = KalmanFilter::Update(H, R)(x, P, measurement);
     x = std::get<0>(pair);
     P = std::get<1>(pair);
 
@@ -186,7 +186,7 @@ TEST(ExtendedKalmanFilterUpdate, Updates)
     auto transform_x = [H](VectorXd x_) {return H * x_;};
     MatrixXd H_Jacobian = Tools::CalculateJacobian(x_old);
 
-    auto pair = Kalman::Update(H_Jacobian, R)(x_old, P_old, measurement);
+    auto pair = KalmanFilter::Update(H_Jacobian, R)(x_old, P_old, measurement);
     x = std::get<0>(pair), P = std::get<1>(pair);
 
     ASSERT_EQ(x, expected_x);
