@@ -15,19 +15,43 @@ namespace Kalman {
     {
         return [&F, &Q](VectorXd x, MatrixXd P) -> std::tuple<VectorXd, MatrixXd>
         {
-            return std::make_tuple(F * x, F * P * F.transpose() + Q);
+            return std::make_tuple(
+                F * x, 
+                F * P * F.transpose() + Q
+            );
         };
     }
 
     std::function<std::tuple<VectorXd, MatrixXd>(VectorXd, MatrixXd, VectorXd)> Update(
         const MatrixXd &H, 
-        const MatrixXd &R, 
-        const std::function<VectorXd(VectorXd)> &transform_x)
+        const MatrixXd &R)
     {
-        return [&H, &R, &transform_x](VectorXd x, MatrixXd P, VectorXd z) -> std::tuple<VectorXd, MatrixXd> {
+        return [&H, &R](VectorXd x, MatrixXd P, VectorXd z) -> std::tuple<VectorXd, MatrixXd> {
             MatrixXd I = MatrixXd::Identity(P.rows(), P.cols());
 
-            VectorXd y = z - transform_x(x);
+            VectorXd y = z - H * x;
+            MatrixXd S = H * P * H.transpose() + R;
+            MatrixXd K = P * H.transpose() * S.inverse();
+
+            MatrixXd new_x = x + K * y;
+            MatrixXd new_P = (I - K * H) * P;
+        
+            return std::make_tuple(new_x, new_P);
+        };
+    }
+
+    std::function<std::tuple<VectorXd, MatrixXd>(VectorXd, MatrixXd, VectorXd)> UpdateEKF(
+        const MatrixXd &H, 
+        const MatrixXd &R)
+    {
+        return [&H, &R](VectorXd x, MatrixXd P, VectorXd z) -> std::tuple<VectorXd, MatrixXd> {
+            MatrixXd I = MatrixXd::Identity(P.rows(), P.cols());
+
+            VectorXd y = z - Tools::Cartesian_to_polar(x);
+
+            // Pick the corresponding angle in the interval [-pi, pi]
+            y[1] = Tools::NormalizeAngle(y[1]);
+
             MatrixXd S = H * P * H.transpose() + R;
             MatrixXd K = P * H.transpose() * S.inverse();
 
@@ -60,14 +84,13 @@ void KalmanFilter::Predict() {
 }
 
 void KalmanFilter::Update(const VectorXd &z) {
-    auto transform_x = [this](VectorXd x){return H_ * x;};
-    auto pair = Kalman::Update(H_, R_, transform_x)(x_, P_, z);
+    auto pair = Kalman::Update(H_, R_)(x_, P_, z);
     x_ = std::get<0>(pair), P_ = std::get<1>(pair);
 }
 
 void KalmanFilter::UpdateEKF(const VectorXd &z) {
     MatrixXd H_Jacobian = Tools::CalculateJacobian(x_);
 
-    auto pair = Kalman::Update(H_Jacobian, R_, Tools::Cartesian_to_polar)(x_, P_, z);
+    auto pair = Kalman::UpdateEKF(H_Jacobian, R_)(x_, P_, z);
     x_ = std::get<0>(pair), P_ = std::get<1>(pair);
 }

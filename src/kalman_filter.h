@@ -11,8 +11,10 @@ namespace Kalman
     std::function<std::tuple<VectorXd, MatrixXd>(VectorXd, MatrixXd)> Predict(const MatrixXd &F, const MatrixXd &Q);
     std::function<std::tuple<VectorXd, MatrixXd>(VectorXd, MatrixXd, VectorXd)> Update(
       const MatrixXd &H, 
-      const MatrixXd &R,
-      const std::function<VectorXd(VectorXd)> &transform_x);
+      const MatrixXd &R);
+    std::function<std::tuple<VectorXd, MatrixXd>(VectorXd, MatrixXd, VectorXd)> UpdateEKF(
+      const MatrixXd &H, 
+      const MatrixXd &R);
 }
 
 class KalmanFilter {

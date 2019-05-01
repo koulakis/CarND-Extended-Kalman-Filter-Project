@@ -117,9 +117,7 @@ TEST(KalmanFilterUpdate, Updates)
     VectorXd measurement(1);
     measurement << 2;
 
-    auto transform_x = [H](VectorXd x_) {return H * x_;};
-
-    auto pair = Kalman::Update(H, R, transform_x)(x, P, measurement);
+    auto pair = Kalman::Update(H, R)(x, P, measurement);
     x = std::get<0>(pair);
     P = std::get<1>(pair);
 
@@ -165,10 +163,10 @@ TEST(ExtendedKalmanFilterUpdate, Updates)
 
     VectorXd expected_x(4);
     expected_x <<
-        -3.4141459299823111, 
-        3.5975216550152656, 
-        4.1693301548843573, 
-        4.6894593212739286;
+        -6.0696528555076945,
+        4.7051670519652893,
+        5.0375079628568189,
+        6.6862682536542115;
 
     MatrixXd expected_P(4, 4);
     expected_P <<
@@ -188,11 +186,21 @@ TEST(ExtendedKalmanFilterUpdate, Updates)
     auto transform_x = [H](VectorXd x_) {return H * x_;};
     MatrixXd H_Jacobian = Tools::CalculateJacobian(x_old);
 
-    auto pair = Kalman::Update(H_Jacobian, R, Tools::Cartesian_to_polar)(x_old, P_old, measurement);
+    auto pair = Kalman::Update(H_Jacobian, R)(x_old, P_old, measurement);
     x = std::get<0>(pair), P = std::get<1>(pair);
 
     ASSERT_EQ(x, expected_x);
     ASSERT_EQ(P, expected_P);
+}
+
+TEST(NormalizeAngle, NormalizesPositiveAngle)
+{
+    ASSERT_EQ(Tools::NormalizeAngle(4343.5), 1.818952738905864);
+}
+
+TEST(NormalizeAngle, NormalizesNegativeAngle)
+{
+    ASSERT_EQ(Tools::NormalizeAngle(-743.2), -1.7841337528088843);
 }
 
 int main(int argc, char **argv)

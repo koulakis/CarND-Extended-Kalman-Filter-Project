@@ -22,6 +22,7 @@ namespace Tools {
     MatrixXd CalculateJacobian(const VectorXd &x_state);
     VectorXd Cartesian_to_polar(VectorXd x);
     VectorXd PolarToCartesianLocation(VectorXd polar);
+    double NormalizeAngle(double theta);
 }
 
 #endif  // TOOLS_H_

@@ -48,7 +48,7 @@ namespace Tools {
         VectorXd out_x(3);
         out_x << 
             measure_x,
-            atan(py / px),
+            atan2(py, px),
             (px * ux + py * uy) / measure_x;
 
         return out_x;
@@ -62,5 +62,10 @@ namespace Tools {
         cartesian << rho * cos(theta), rho * sin(theta);
 
         return cartesian;
+    }
+
+    double NormalizeAngle(double theta)
+    {
+        return theta - trunc(theta / M_PI) * M_PI;
     }
 }
