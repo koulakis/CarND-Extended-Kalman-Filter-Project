@@ -1,4 +1,4 @@
-#include "FusionEKF.h"
+#include "fusion_ekf.h"
 #include <iostream>
 #include "Eigen/Dense"
 #include "tools.h"
@@ -12,40 +12,38 @@ using std::vector;
 /**
  * Constructor.
  */
-FusionEKF::FusionEKF() {
-  is_initialized_ = false;
-
-  previous_timestamp_ = 0;
-
-  // initializing matrices
+FusionEKF::FusionEKF() 
+{
+  /** 
+   * initializing constant matrices
+   * here it is assumed that the laser & radar observation noise and the laser model matrix are constant 
+   * and we hardcode them in the FusionEKF class
+   */
   R_laser_ = MatrixXd(2, 2);
   R_radar_ = MatrixXd(3, 3);
   H_laser_ = MatrixXd(2, 4);
-  Hj_ = MatrixXd(3, 4);
 
-  //measurement covariance matrix - laser
-  R_laser_ <<
-    0.0225, 0,
-    0, 0.0225;
-
-  //measurement covariance matrix - radar
-  R_radar_ <<
-    0.09, 0, 0,
-    0, 0.0009, 0,
-    0, 0, 0.09;
-
-  /**
-   * TODO: Finish initializing the FusionEKF.
-   * TODO: Set the process and measurement noises
-   */
   H_laser_ <<
     1, 0, 0, 0,
     0, 1, 0, 0;
 
+  R_laser_ <<
+    0.0225, 0,
+    0, 0.0225; 
+  
+  R_radar_ <<
+    0.09, 0, 0,
+    0, 0.0009, 0,
+    0, 0, 0.09;
+  
+  noise_ax_ = 9;
+  noise_ay_ = 9;
+
+  // initialize the class state 
   x_ = VectorXd(4);
-  F_ = MatrixXd(4, 4);
   P_ = MatrixXd(4, 4);
-  Q_ = MatrixXd(4, 4);
+
+  is_initialized_ = false;
 }
 
 /**
@@ -53,7 +51,8 @@ FusionEKF::FusionEKF() {
  */
 FusionEKF::~FusionEKF() {}
 
-VectorXd FusionEKF::getX(){ return x_; };
+// Accessor of the 
+VectorXd FusionEKF::EstimatedLocation(){ return x_; };
 
 void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
   /**
@@ -63,21 +62,7 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
     // first measurement
     cout << "EKF: " << endl;
     
-    x_ << 1, 1, 1, 1;
-
-    F_ << 
-      1, 0, 1, 0,
-      0, 1, 0, 1,
-      0, 0, 1, 0,
-      0, 0, 0, 1;
-
-    
-    P_ << 
-      1, 0, 0, 0,
-      0, 1, 0, 0,
-      0, 0, 1000, 0,
-      0, 0, 0, 1000;
-
+    // initialize x
     if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR) {
       VectorXd x_location = Tools::PolarToCartesianLocation(measurement_pack.raw_measurements_);
       x_ << x_location(0), x_location(1), 0, 0;
@@ -86,10 +71,17 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
       x_ << measurement_pack.raw_measurements_[0], measurement_pack.raw_measurements_[1], 0, 0;
     }
 
-    previous_timestamp_ = measurement_pack.timestamp_;
+    // initialize P
+    P_ << 
+      1, 0, 0, 0,
+      0, 1, 0, 0,
+      0, 0, 1000, 0,
+      0, 0, 0, 1000;
 
-    // done initializing, no need to predict or update
+    // initialize timestamp and set initialization to true
+    previous_timestamp_ = measurement_pack.timestamp_;
     is_initialized_ = true;
+
     return;
   }
 
@@ -99,21 +91,21 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
   double dt = (measurement_pack.timestamp_ - previous_timestamp_) / 1000000.0;
   previous_timestamp_ = measurement_pack.timestamp_;
 
-  F_ <<
+  MatrixXd F = MatrixXd(4, 4);
+  F <<
     1, 0, dt, 0,
     0, 1, 0, dt,
     0, 0, 1, 0,
     0, 0, 0, 1;
 
-  double noise_ax = 9, noise_ay = 9;
+  MatrixXd Q = MatrixXd(4, 4);
+  Q << 
+    pow(dt, 4) / 4 * noise_ax_, 0, pow(dt, 3) / 2 * noise_ax_, 0,
+    0, pow(dt, 4) / 4 * noise_ay_, 0, pow(dt, 3) / 2 * noise_ay_,
+    pow(dt, 3) / 2 * noise_ax_, 0, pow(dt, 2) * noise_ax_, 0,
+    0, pow(dt, 3) / 2 * noise_ay_, 0, pow(dt, 2) * noise_ay_;
 
-  Q_ << 
-    pow(dt, 4) / 4 * noise_ax, 0, pow(dt, 3) / 2 * noise_ax, 0,
-    0, pow(dt, 4) / 4 * noise_ay, 0, pow(dt, 3) / 2 * noise_ay,
-    pow(dt, 3) / 2 * noise_ax, 0, pow(dt, 2) * noise_ax, 0,
-    0, pow(dt, 3) / 2 * noise_ay, 0, pow(dt, 2) * noise_ay;
-
-  auto prediction = KalmanFilter::Predict(F_, Q_)(x_, P_);
+  auto prediction = KalmanFilter::Predict(F, Q)(x_, P_);
   x_ = std::get<0>(prediction), P_ = std::get<1>(prediction);
 
   /**

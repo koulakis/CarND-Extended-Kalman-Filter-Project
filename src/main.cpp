@@ -2,7 +2,7 @@
 #include <uWS/uWS.h>
 #include <iostream>
 #include "json.hpp"
-#include "FusionEKF.h"
+#include "fusion_ekf.h"
 #include "tools.h"
 
 using Eigen::MatrixXd;
@@ -114,7 +114,7 @@ int main() {
 
           VectorXd estimate(4);
 
-          VectorXd x = fusionEKF.getX();
+          VectorXd x = fusionEKF.EstimatedLocation();
           double p_x = x(0);
           double p_y = x(1);
           double v1  = x(2);

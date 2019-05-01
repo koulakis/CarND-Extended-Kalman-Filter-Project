@@ -9,6 +9,9 @@
 #include "measurement_package.h"
 #include "tools.h"
 
+using Eigen::VectorXd;
+using Eigen::MatrixXd;
+
 class FusionEKF {
  public:
   /**
@@ -26,24 +29,25 @@ class FusionEKF {
    */
   void ProcessMeasurement(const MeasurementPackage &measurement_pack);
 
-  VectorXd getX();
+  VectorXd EstimatedLocation();
 
  private:
+  // class constants
+  MatrixXd R_laser_;
+  MatrixXd R_radar_;
+  MatrixXd H_laser_;
+  double noise_ax_;
+  double noise_ay_;
+
+  // class state
+  VectorXd x_;
+  MatrixXd P_;
+
   // check whether the tracking toolbox was initialized or not (first measurement)
   bool is_initialized_;
 
   // previous timestamp
   long long previous_timestamp_;
-
-  // tool object used to compute Jacobian and RMSE
-  Eigen::MatrixXd R_laser_;
-  Eigen::MatrixXd R_radar_;
-  Eigen::MatrixXd H_laser_;
-  Eigen::MatrixXd Hj_;
-  Eigen::MatrixXd F_;
-  Eigen::MatrixXd Q_;
-  Eigen::VectorXd x_;
-  Eigen::MatrixXd P_;
 };
 
 #endif // FusionEKF_H_
